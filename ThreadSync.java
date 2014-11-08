@@ -13,7 +13,7 @@ public class ThreadSync
 
     private static boolean runFlag = true;
 
-    private static Semaphore cSemaphore = new Semaphore(1);
+    private static Semaphore cSemaphore = new Semaphore(5);
     private static Semaphore dSemaphore = new Semaphore(0);
     private static Semaphore pSemaphore = new Semaphore(0);
 
@@ -52,14 +52,12 @@ public class ThreadSync
         public void run(){
             while (runFlag) {
                 try {
-                    cSemaphore.acquire();
+                    cSemaphore.acquire(5);
                     System.out.printf( "%s\n", ":");
+                    dSemaphore.release(3);
                 }
                 catch (InterruptedException ex) {
                     ex.printStackTrace();
-                }
-                if (cSemaphore.availablePermits() == 0) {
-                    dSemaphore.release(3);
                 }
             }
         }
@@ -72,12 +70,11 @@ public class ThreadSync
                 try {
                     dSemaphore.acquire();
                     System.out.printf( "%s\n", "-");
+                    // release 5 each time three times in a row, so 5 * 3 = 15 total released
+                    pSemaphore.release(5);
                 }
                 catch (InterruptedException ex) {
                     ex.printStackTrace();
-                }
-                if (dSemaphore.availablePermits() == 0) {
-                    pSemaphore.release(5);
                 }
             }
         }
@@ -88,14 +85,13 @@ public class ThreadSync
         public void run(){
             while (runFlag) {
                 try {
-                    pSemaphore.acquire();
+                    // acquire 3 at a time with 15 released, so 15 / 3 = 5 times it can run in a row
+                    pSemaphore.acquire(3);
                     System.out.printf( "%s\n", ")");
+                    cSemaphore.release();
                 }
                 catch (InterruptedException ex) {
                     ex.printStackTrace();
-                }
-                if (pSemaphore.availablePermits() == 0) {
-                    cSemaphore.release();
                 }
             }
         }
